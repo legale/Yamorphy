@@ -25,7 +25,7 @@ Edit config.php to setup database parameters
 `wget http://opencorpora.org/files/export/dict/dict.opcorpora.xml.bz2 -P ./xml/`
 
 ### Convert xml dictionary into set of serialized arrays files
-`php parse_xml.php`
+`php xml_parse.php`
 
 ### Create and fill database
 `php fill_db.php`
