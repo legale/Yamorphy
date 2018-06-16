@@ -1,4 +1,4 @@
-# Yamorphy v0.0.2
+# Yamorphy v0.0.3
 PHP Morphological analyzer based on the OpenCorpora russian dictionary. This software provided under the MIT license.
 
 

@@ -36,7 +36,11 @@ function cli_read($argv)
     array_shift($argv); //element 0 is a script filename
     $cnt = count($argv);
     if ($cnt < 2) {
-        exit("commands: find, solo \nsyntax: [command] [argument] \nex: find мусорок\n");
+        exit("commands: bmark, find, solo 
+        \nsyntax: [command] [argument] 
+        \nex: find мусорок
+        \nex benchmark: bmark find 100 слово
+        \nwill run find слово 100 times and print time in seconds");
     }
 
     $func = array_shift($argv);
