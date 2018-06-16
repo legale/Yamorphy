@@ -23,7 +23,6 @@ if (class_exists('Redis')) {
 //run
 cli_read($argv);
 
-
 //$redis->setOption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_NONE);
 //$redis->setOption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_PHP);
 //var_dump($redis->getOption(Redis::OPT_SERIALIZER));
@@ -36,11 +35,13 @@ function cli_read($argv)
     array_shift($argv); //element 0 is a script filename
     $cnt = count($argv);
     if ($cnt < 2) {
-        exit("commands: bmark, find, solo 
+        exit("commands: bmark, find, find_txt 
         \nsyntax: [command] [argument] 
         \nex: find мусорок
         \nex benchmark: bmark find 100 слово
-        \nwill run find слово 100 times and print time in seconds");
+        \nwill run find слово 100 times and print elapsed time in seconds
+        \nex: find_txt list.txt
+        \nwill find word in list.txt and show elapsed time in ms");
     }
 
     $func = array_shift($argv);
@@ -49,10 +50,25 @@ function cli_read($argv)
 
 }
 
+function find_txt($src)
+{
+    $list = file($src);
+    $start = microtime(true);
+    foreach ($list as $word) {
+        if(false === find($word)){
+            print "not found: $word\n";
+        }
+    }
+    print (microtime(true) - $start) * 1000 . "ms\n";
+}
+
+
 function find($word, $props = null)
 {
-    global $db_conf, $redis;
-    $db = new \My\Simpledb($db_conf);
+    global $db_conf, $redis, $db, $post;
+    $db = empty($db) ? new \My\Simpledb($db_conf) : $db;
+    $word = trim($word);
+
     if ($redis) {
         $wid = redis_get($word);
     }
@@ -60,19 +76,35 @@ function find($word, $props = null)
     if (!$redis || $wid === false) {
         $wid = $db->getOne("SELECT id FROM words WHERE name = ?s", $word);
     }
-    return findlemma($wid, $props);
+
+    return $wid === false ? false : findlemma($wid, $props);
 }
 
 
 function findlemma($word_id, $props = null)
 {
     //print $word_id."\n";
-    global $db_conf, $redis;
-    $db = new \My\Simpledb($db_conf);
-    if (!$redis) {
-        $post = $db->getInd('name', "SELECT name, id FROM `grammemes` WHERE name != ?s", 'POST');
+    global $db_conf, $redis, $db, $post;
+    $db = empty($db) ? new \My\Simpledb($db_conf) : $db;
 
-        $post = array_combine(array_column($post, 'id'), array_column($post, 'name'));
+
+    if (!$redis) {
+
+        $cached = false;
+        if (empty($post) && function_exists('apcu_fetch')) {
+            $post = apcu_fetch('yamorphy', $cached);
+        }
+
+        if (empty($post) && !$cached) {
+            $post = $db->getInd('name', "SELECT name, id FROM `grammemes` WHERE name != ?s", 'POST');
+            $post = array_combine(array_column($post, 'id'), array_column($post, 'name'));
+
+            if (function_exists('apcu_store')) {
+                apcu_store('yamorphy', $post);
+            }
+        }
+
+
         if ($props !== null) {
             $q = "SELECT f.id, w.name, f.props FROM `forms_uni` f 
         INNER JOIN `words` w ON f.word_id = w.id
@@ -82,10 +114,12 @@ function findlemma($word_id, $props = null)
         INNER JOIN `words` w ON f.word_id = w.id
         WHERE 1 AND f.id in (SELECT id FROM forms_uni WHERE word_id = ?i)";
         }
+
         $res = $db->getAll($q, $word_id);
         foreach ($res as &$r) {
             $r['props'] = array_intersect_key($post, array_flip(explode('|', $r['props'])));
         }
+//        var_dump($db->lastQuery());
         return $res;
     }
 
