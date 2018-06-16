@@ -190,8 +190,8 @@ class Xmlparse
                 $open = 'bzopen';
                 $read = 'bzread';
                 $close = 'bzclose';
-                if(function_exists($open)){
-                    exit("you need to 'sudo apt install php.$ext' extension first\n");
+                if(!function_exists($open)){
+                    exit("you need to install php $ext extension first\n");
                 }
                 break;
 
