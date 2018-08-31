@@ -19,9 +19,8 @@ $check = $db->query_silent("SELECT 1 FROM `$table` LIMIT 1");
 if ($check === false) {
     $db->query("CREATE TABLE `$table` (
     `id` MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`, `name`), 
-    `name` VARCHAR(75)  NOT NULL DEFAULT '' 
-    ) ENGINE = InnoDB");
-    $db->query("ALTER TABLE `$table` ADD INDEX (`name`, `id`)");
+    `name` VARCHAR(75)  NOT NULL DEFAULT '', INDEX (`name`,`id`)
+    ) ENGINE = InnoDB COLLATE=utf8_bin");
 }
 $db->query("truncate table `$table`");
 
@@ -73,10 +72,9 @@ $check = $db->query_silent("SELECT 1 FROM `$table` LIMIT 1");
 if ($check === false) {
     $db->query("CREATE TABLE `$table` (
     `id` MEDIUMINT UNSIGNED NOT NULL,
-    `word_id` MEDIUMINT UNSIGNED NOT NULL, 
+    `word_id` MEDIUMINT UNSIGNED NOT NULL, INDEX (`word_id`, `id`), 
     `props` VARCHAR(100)  NOT NULL DEFAULT '', PRIMARY KEY (`id`, `props`, `word_id`)
     ) ENGINE = InnoDB");
-    $db->query("ALTER TABLE $table ADD INDEX (`word_id`, `id`)");
 }
 $db->query("truncate table `$table`");
 
@@ -110,7 +108,7 @@ foreach (glob($serialized . 'restr_*') as $filename) {
             'type' => $elem[1]['type'],
             'auto' => $elem[1]['auto'],
             'left_type' => $elem[2]['left_0'][1]['type'],
-            'left_type' => $elem[2]['right_1'][1]['type'],
+            'right_type' => $elem[2]['right_1'][1]['type'],
             'left' => $elem[2]['left_0'][2],
             'right' => $elem[2]['right_1'][2]
         );
@@ -128,8 +126,8 @@ gc_mem_caches();
 print " m after:" . memory_get_usage(true) . "\n";
 
 $words = array();
-$post = $db->getInd('name', "SELECT name, id FROM `grammemes` WHERE name != ?s", 'POST');
-$post = array_combine(array_column($post, 'name'), array_column($post, 'id'));
+$post = $db->getIndCol('name', "SELECT name, id FROM `grammemes` WHERE name != ?s", 'POST');
+
 //print_r($post);
 //die;
 
@@ -145,25 +143,26 @@ foreach (glob($serialized . 'lemma_*') as $filename) {
 }
 
 
+/**
+ * @param $elem
+ * @return bool
+ */
 function parse_lemma($elem)
 {
     global $db, $post;
-    $part = null;
     $table = 'lemmata';
+    $props = [];
 
     foreach ($elem[2]['l_0'][2] as &$e) {
-        if (isset($post[$e[1]['v']])) {
-            $part = $post[$e[1]['v']];
-        }
         $props[] = $post[$e[1]['v']];
     }
 
-    $set = array(
+    $set = [
         'id' => $elem[1]['id'],
         'rev' => $elem[1]['rev'],
         'word_id' => get_word_id($elem[2]['l_0'][1]['t']),
         'props' => implode('|', $props)
-    );
+    ];
 
     if ($db->query("INSERT `$table` SET ?u", $set) === false) {
         print "query error: $db->prepared_query \n";
@@ -174,6 +173,11 @@ function parse_lemma($elem)
 }
 
 
+/**
+ * @param $id
+ * @param $array
+ * @return bool
+ */
 function parse_uni($id, $array)
 {
     global $db, $post;
@@ -181,7 +185,8 @@ function parse_uni($id, $array)
     $set['id'] = $id;
 
     foreach ($array as $f) {
-        unset($props, $set['name'], $set['props']);
+        $props = [];
+        unset($set['name'], $set['props']);
         switch ($f[0]) {
             case 'f':
                 $set['word_id'] = get_word_id($f[1]['t']);
@@ -208,6 +213,10 @@ function parse_uni($id, $array)
     return true;
 }
 
+/**
+ * @param $word
+ * @return bool|FALSE|int|string
+ */
 function get_word_id($word)
 {
     global $db, $words;

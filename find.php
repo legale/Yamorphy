@@ -36,12 +36,12 @@ function cli_read($argv)
     $cnt = count($argv);
     if ($cnt < 2) {
         exit("commands: bmark, find, find_txt 
-        \nsyntax: [command] [argument] 
-        \nex: find мусорок
-        \nex benchmark: bmark find 100 слово
-        \nwill run find слово 100 times and print elapsed time in seconds
-        \nex: find_txt list.txt
-        \nwill find word in list.txt and show elapsed time in ms");
+        syntax: [command] [argument] 
+        ex: find мусор
+        ex benchmark: bmark find 100 слово
+        will run find слово 100 times and print elapsed time in seconds
+        ex: find_txt list.txt
+        will find word in list.txt and show elapsed time in ms");
     }
 
     $func = array_shift($argv);
