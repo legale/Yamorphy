@@ -152,7 +152,7 @@ class Simpledb
         if (!$this->conn) {
             $this->error(mysqli_connect_errno() . " " . mysqli_connect_error());
             return false;
-        } else{
+        } else {
             $this->connected = true;
         }
         mysqli_set_charset($this->conn, $opt['charset']) or $this->error(mysqli_error($this->conn));
@@ -332,6 +332,23 @@ class Simpledb
         }
         return $ret;
     }
+
+    /**
+     * Helper function to insert row and return it's id
+     *
+     * Examples:
+     * $data = $db->insert("INSERT INTO table SET column = ?s", $string);
+     *
+     * @param string $query - an SQL query with placeholders
+     * @param mixed $arg,... unlimited number of arguments to match placeholders in the query
+     * @return int inserted row id
+     */
+    public function insert(): ?int
+    {
+        $query = $this->prepareQuery(func_get_args());
+        return $this->rawQuery($query) ? $this->insertId() : null;
+    }
+
 
     /**
      * Helper function to get all the rows of resultset into indexed array right out of query and optional arguments

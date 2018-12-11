@@ -1,4 +1,5 @@
 <?php
+/*Yamorphy v0.1.1 */
 require_once('config.php');
 require_once('Db.php');
 $db = new \My\Simpledb($db_conf);

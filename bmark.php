@@ -17,7 +17,6 @@ function bmark() {
         return var_export($e, true);
     }, $args);
     $str = "$fun(" . implode(', ', $args) . ");";
-    print $str;
     while ($i < $cnt) {
         $i++;
         $res = eval($str);

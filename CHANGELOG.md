@@ -9,3 +9,6 @@ Ex: bmark 100 find 'скорость'
 
 v0.0.2
 - Xmlparse.php minor fix
+
+v0.1.1
+- Now the program uses a new php extension php-ext-libtrie (libtrie C library) as trie structure.
